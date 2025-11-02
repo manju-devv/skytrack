@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "409204145212",
+    "project_id": "sky-track-ae4ac",
+    "storage_bucket": "sky-track-ae4ac.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:409204145212:android:ba06a065e614e3579f5739",
+        "android_client_info": {
+          "package_name": "com.example.myapplication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "409204145212-pbugq0k36p5mpgich9jl91pdmu3qrb93.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.myapplication",
+            "certificate_hash": "85f21e83e7e13edc9e74c2beb97291747568d112"
+          }
+        },
+        {
+          "client_id": "409204145212-q0mdku1arjedf9t0u7at6bjeggmegatn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfYiOAvFdoZp38gvp7q4SoSHAjqlIeTTM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "409204145212-q0mdku1arjedf9t0u7at6bjeggmegatn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

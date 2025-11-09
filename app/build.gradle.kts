@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
-    id("kotlin-kapt") // ✅ use parentheses for Kotlin DSL
+    id("kotlin-kapt")
 }
 
 android {

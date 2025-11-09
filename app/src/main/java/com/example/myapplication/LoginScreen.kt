@@ -2,6 +2,7 @@ package com.example.myapplication
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -11,153 +12,112 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import com.example.myapplication.data.AppDatabase
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
-    onNavigateToRegister: () -> Unit,
-    validateUser: (String, String) -> Boolean
+    onNavigateToRegister: () -> Unit
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var error by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-
-    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val db = remember { AppDatabase.getDatabase(context) }
+    val userDao = db.userDao()
     val scope = rememberCoroutineScope()
 
-    val gradient = Brush.verticalGradient(
-        colors = listOf(Color(0xFFc9d6ff), Color(0xFFe2e2e2))
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var showPassword by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+
+    // background gradient
+    val gradient = Brush.linearGradient(
+        colors = listOf(
+            Color(0xFF001F3F),
+            Color(0xFF003366)
+        ),
+        start = androidx.compose.ui.geometry.Offset(0f, 0f),
+        end = androidx.compose.ui.geometry.Offset(0f, Float.POSITIVE_INFINITY)
     )
 
-    Scaffold(
-        containerColor = Color.Transparent,
-        snackbarHost = {
-            SnackbarHost(
-                hostState = snackbarHostState,
+
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(gradient)
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
+            elevation = CardDefaults.cardElevation(6.dp)
+        ) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-                    .wrapContentHeight(Alignment.Bottom)
-            )
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(gradient)
-                .padding(padding),
-            contentAlignment = Alignment.Center
-        ) {
-            Card(
-                modifier = Modifier
-                    .padding(horizontal = 24.dp)
-                    .fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = MaterialTheme.shapes.large
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .padding(28.dp)
-                        .fillMaxWidth(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+                Text("Login", style = MaterialTheme.typography.headlineMedium)
+
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Password") },
+                    singleLine = true,
+                    visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        val image = if (showPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
+                        IconButton(onClick = { showPassword = !showPassword }) {
+                            Icon(imageVector = image, contentDescription = null)
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                if (errorMessage.isNotEmpty()) {
                     Text(
-                        text = "Log in",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF333333),
-                        textAlign = TextAlign.Center
+                        text = errorMessage,
+                        color = Color.Red,
+                        style = MaterialTheme.typography.bodyMedium
                     )
+                }
 
-                    Spacer(Modifier.height(16.dp))
-
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it },
-                        label = { Text("Email Address") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-
-                    Spacer(Modifier.height(12.dp))
-
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text("Password") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        trailingIcon = {
-                            val icon = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
-                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(icon, contentDescription = null)
+                Button(
+                    onClick = {
+                        scope.launch {
+                            val user = userDao.loginUser(email, password)
+                            if (user != null) {
+                                onLoginSuccess()
+                            } else {
+                                errorMessage = "Invalid email or password"
                             }
                         }
-                    )
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Login")
+                }
 
-                    Spacer(Modifier.height(8.dp))
-
-                    if (error.isNotEmpty())
-                        Text(text = error, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
-
-                    Spacer(Modifier.height(20.dp))
-
-                    Button(
-                        onClick = {
-                            scope.launch {
-                                val isValid = withContext(Dispatchers.IO) {
-                                    validateUser(email, password)
-                                }
-
-                                if (isValid) {
-                                    error = ""
-
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            message = "✅ Login successful!",
-                                            duration = SnackbarDuration.Short
-                                        )
-                                    }
-
-                                    delay(500)
-                                    onLoginSuccess()
-                                } else {
-                                    error = "Invalid email or password"
-                                }
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        shape = MaterialTheme.shapes.medium
-                    ) {
-                        Text("Login", fontSize = 16.sp)
-                    }
-
-
-                    Spacer(Modifier.height(12.dp))
-
-                    TextButton(onClick = onNavigateToRegister) {
-                        Text(
-                            "Don't have an account? Register",
-                            color = Color(0xFF4a4a4a)
-                        )
-                    }
+                TextButton(onClick = onNavigateToRegister) {
+                    Text("Don't have an account? Sign Up")
                 }
             }
         }

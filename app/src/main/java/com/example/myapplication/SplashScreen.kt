@@ -22,7 +22,6 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(onTimeout: () -> Unit) {
-    // State for fade-in and scale animation
     var startAnimation by remember { mutableStateOf(false) }
 
     val alphaAnim = animateFloatAsState(
@@ -39,7 +38,7 @@ fun SplashScreen(onTimeout: () -> Unit) {
 
     LaunchedEffect(Unit) {
         startAnimation = true
-        delay(2500) // animation duration + hold
+        delay(2500)
         onTimeout()
     }
 
@@ -70,7 +69,6 @@ fun SplashScreen(onTimeout: () -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-
             Text(
                 text = "Sky Track",
                 color = Color.White,
@@ -81,7 +79,6 @@ fun SplashScreen(onTimeout: () -> Unit) {
             )
 
             Spacer(modifier = Modifier.height(8.dp))
-
 
             Text(
                 text = "Aviation • Compass • Live Flights",

@@ -28,6 +28,7 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
     val db = remember { AppDatabase.getDatabase(context) }
     val userDao = db.userDao()
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -39,10 +40,7 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
 
     // Background gradient
     val gradient = Brush.verticalGradient(
-        colors = listOf(
-            Color(0xFF001F3F),
-            Color(0xFF003366)
-        )
+        colors = listOf(Color(0xFF001F3F), Color(0xFF003366))
     )
 
     fun isValidEmail(email: String): Boolean {
@@ -54,118 +52,165 @@ fun RegisterScreen(onNavigateToLogin: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .background(gradient)
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
+            .padding(24.dp)
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
-            elevation = CardDefaults.cardElevation(6.dp)
+        // Inner Box to center content vertically and horizontally
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
+                elevation = CardDefaults.cardElevation(6.dp)
             ) {
-                Text("Create Account", style = MaterialTheme.typography.headlineMedium)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text("Create Account", style = MaterialTheme.typography.headlineMedium)
 
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = {
-                        email = it.trim()
-                        if (showErrors) errorMessage = ""
-                    },
-                    label = { Text("Email") },
-                    singleLine = true,
-                    isError = showErrors && (email.isBlank() || !isValidEmail(email)),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = {
-                        password = it
-                        if (showErrors) errorMessage = ""
-                    },
-                    label = { Text("Password") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        val image = if (showPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
-                        IconButton(onClick = { showPassword = !showPassword }) {
-                            Icon(imageVector = image, contentDescription = null)
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    isError = showErrors && password.isBlank()
-                )
-
-                OutlinedTextField(
-                    value = confirmPassword,
-                    onValueChange = {
-                        confirmPassword = it
-                        if (showErrors) errorMessage = ""
-                    },
-                    label = { Text("Confirm Password") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = if (showConfirmPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        val image = if (showConfirmPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
-                        IconButton(onClick = { showConfirmPassword = !showConfirmPassword }) {
-                            Icon(imageVector = image, contentDescription = null)
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    isError = showErrors && (confirmPassword.isBlank() || confirmPassword != password)
-                )
-
-                if (showErrors && errorMessage.isNotEmpty()) {
-                    Text(
-                        text = errorMessage,
-                        color = Color.Red,
-                        style = MaterialTheme.typography.bodyMedium
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = {
+                            email = it.trim()
+                            if (showErrors) errorMessage = ""
+                        },
+                        label = { Text("Email") },
+                        singleLine = true,
+                        isError = showErrors && (email.isBlank() || !isValidEmail(email)),
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            errorTextColor = Color.Black
+                        )
                     )
-                }
 
-                Button(
-                    onClick = {
-                        showErrors = true
-                        scope.launch {
-                            when {
-                                email.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
-                                    errorMessage = "All fields are required"
-                                }
-                                !isValidEmail(email) -> {
-                                    errorMessage = "Please enter a valid email address"
-                                }
-                                password != confirmPassword -> {
-                                    errorMessage = "Passwords do not match"
-                                }
-                                else -> {
-                                    val existingUser = userDao.getUserByEmail(email)
-                                    if (existingUser == null) {
-                                        userDao.insertUser(User(email = email, password = password))
-                                        onNavigateToLogin()
-                                    } else {
-                                        errorMessage = "User already exists"
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = {
+                            password = it
+                            if (showErrors) errorMessage = ""
+                        },
+                        label = { Text("Password") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        visualTransformation =
+                            if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            val image = if (showPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
+                            IconButton(onClick = { showPassword = !showPassword }) {
+                                Icon(imageVector = image, contentDescription = null)
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        isError = showErrors && password.isBlank(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            errorTextColor = Color.Black
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = {
+                            confirmPassword = it
+                            if (showErrors) errorMessage = ""
+                        },
+                        label = { Text("Confirm Password") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        visualTransformation =
+                            if (showConfirmPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            val image = if (showConfirmPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
+                            IconButton(onClick = { showConfirmPassword = !showConfirmPassword }) {
+                                Icon(imageVector = image, contentDescription = null)
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        isError = showErrors && (confirmPassword.isBlank() || confirmPassword != password),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            errorTextColor = Color.Black
+                        )
+                    )
+
+                    if (showErrors && errorMessage.isNotEmpty()) {
+                        Text(
+                            text = errorMessage,
+                            color = Color.Red,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            showErrors = true
+                            scope.launch {
+                                when {
+                                    email.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
+                                        errorMessage = "All fields are required"
+                                    }
+                                    !isValidEmail(email) -> {
+                                        errorMessage = "Please enter a valid email address"
+                                    }
+                                    password != confirmPassword -> {
+                                        errorMessage = "Passwords do not match"
+                                    }
+                                    else -> {
+                                        val existingUser = userDao.getUserByEmail(email)
+                                        if (existingUser == null) {
+                                            userDao.insertUser(User(email = email, password = password))
+
+                                            // Launch snackbar in a separate coroutine so it doesn't block navigation
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    message = "Registered successfully, please login"
+                                                )
+                                            }
+
+                                            // Immediately navigate to login screen
+                                            onNavigateToLogin()
+                                        } else {
+                                            errorMessage = "User already exists"
+                                        }
                                     }
                                 }
                             }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Register")
-                }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Register")
+                    }
 
-                TextButton(onClick = onNavigateToLogin) {
-                    Text("Already have an account? Login")
+
+
+                    TextButton(onClick = onNavigateToLogin) {
+                        Text("Already have an account? Login")
+                    }
                 }
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter),
+            snackbar = { snackbarData ->
+                Snackbar(
+                    snackbarData = snackbarData,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        )
+
     }
 }

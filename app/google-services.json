@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "362013079446",
+    "project_id": "skytrack-mad",
+    "storage_bucket": "skytrack-mad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:362013079446:android:846e638f4345503f270fb7",
+        "android_client_info": {
+          "package_name": "com.example.myapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHeEfChS3zSl3_i57S9kypcnHsrCiy_4Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
